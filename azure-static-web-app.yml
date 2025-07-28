@@ -1,0 +1,97 @@
+parameters:
+  - name: build
+    type: boolean
+    default: false
+    displayName: Force manual build
+  - name: zip
+    type: boolean
+    default: false
+    displayName: Zip everything
+
+variables:
+  - name: build
+    ${{ if eq(parameters.build, true) }}:
+      value: "MANUAL"
+    ${{ else }}:
+      value: "AUTO"
+
+name: Activit - Build $(build)
+
+pr:
+  branches:
+    include:
+      - main
+trigger:
+  branches:
+    include:
+      - main
+
+jobs:
+  - job: build_and_deploy_job
+    displayName: Build and Deploy Job
+    condition: or(eq(variables['Build.Reason'], 'Manual'),or(eq(variables['Build.Reason'], 'PullRequest'),eq(variables['Build.Reason'], 'IndividualCI')))
+    pool:
+      vmImage: ubuntu-latest
+
+    variables:
+      - group: Azure-Static-Web-Apps-delightful-sea-0eeaace03-variable-group
+
+    steps:
+      - checkout: self
+        submodules: true
+
+      - task: NodeTool@0
+        displayName: "Install Node.js"
+        enabled: ${{ parameters.build }}
+        inputs:
+          versionSpec: "20.x"
+
+      - script: npm install
+        displayName: "Install dependencies"
+        enabled: ${{ parameters.build }}
+
+      - script: npm run build
+        displayName: "Build everything"
+        enabled: ${{ parameters.build }}
+
+      - task: AzureStaticWebApp@0
+        displayName: "Deploy manual"
+        enabled: ${{ parameters.build }}
+        inputs:
+          azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN_DELIGHTFUL_SEA_0EEAACE03)
+          app_location: "/app/dist"
+          api_location: "/api/dist"
+          output_location: ""
+          app_build_command: ""
+          api_build_command: ""
+          skip_app_build: true
+          skip_api_build: true
+          config_file_location: "/" # Config file location.
+          verbose: true
+
+      - task: AzureStaticWebApp@0
+        displayName: "Deploy auto"
+        enabled: ${{ not(parameters.build) }}
+        inputs:
+          azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN_DELIGHTFUL_SEA_0EEAACE03)
+          app_location: "/app/" # App source code path
+          api_location: "/api/" # Api source code path - optional
+          output_location: "dist" # Built app content directory - optional
+          config_file_location: "/" # Config file location.
+          verbose: true
+
+      - task: ArchiveFiles@2
+        displayName: "Zip whole staging directory"
+        enabled: ${{ parameters.zip }}
+        inputs:
+          rootFolderOrFile: "$(Pipeline.Workspace)"
+          includeRootFolder: false
+          archiveFile: "$(Build.ArtifactStagingDirectory)/deploy-package.zip"
+          verbose: true
+
+      - task: PublishBuildArtifacts@1
+        displayName: "Publish artifact"
+        enabled: ${{ parameters.zip }}
+        inputs:
+          pathToPublish: "$(Build.ArtifactStagingDirectory)"
+          artifactName: "drop"

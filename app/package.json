@@ -1,0 +1,22 @@
+{
+  "name": "@activit/app",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "astro": "^5.12.2"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.10"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.8.0"
+  }
+}

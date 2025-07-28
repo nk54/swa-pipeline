@@ -1,0 +1,13 @@
+{
+  "include": ["src"],
+  "exclude": ["dist"],
+  "compilerOptions": {
+    "module": "NodeNext",
+    "target": "esnext",
+    "outDir": "dist",
+    "rootDir": "src",
+    "sourceMap": true,
+    "strict": true,
+    "moduleResolution": "nodenext"
+  }
+}
